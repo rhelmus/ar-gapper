@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "constants.h"
+
 enum EPathType
 {
     PATH_HORIZONTAL,
@@ -21,9 +23,19 @@ enum EPathType
     PATH_CROSS
 };
 
+enum
+{
+    MIN_GRID_WIDTH = 5,
+    MIN_GRID_HEIGHT = 5,
+    MAX_GRID_WIDTH = SCREEN_WIDTH / CHAR_SIZE,
+    MAX_GRID_HEIGHT = SCREEN_HEIGHT / CHAR_SIZE
+};
+
 class CLevel
 {
-    uint8_t gridSize;
+    uint8_t gridWidth, gridHeight;
+    uint64_t markedColumns[MAX_GRID_WIDTH / MIN_GRID_WIDTH + 1];
+    uint64_t markedRows[MAX_GRID_HEIGHT / MIN_GRID_HEIGHT + 1];
 
     void draw(void);
 
@@ -31,10 +43,18 @@ public:
     CLevel(void) { }
 
     void load(uint8_t level);
+    void markChar(uint8_t x, uint8_t y);
 
-    uint8_t getGridSize(void) const { return gridSize; }
+    uint8_t getGridWidth(void) const { return gridWidth; }
+    uint8_t getGridHeight(void) const { return gridHeight; }
 };
 
-EPathType getPathType(uint16_t x, uint16_t y);
+extern CLevel level;
+
+
+EPathType getPxPathType(uint16_t x, uint16_t y);
+inline uint8_t getChFromPx(uint16_t px) { return px / CHAR_SIZE; }
+inline uint8_t getChTileWOffset(uint8_t ch) { return ch % level.getGridWidth(); }
+inline uint8_t getChTileHOffset(uint8_t ch) { return ch % level.getGridHeight(); }
 
 #endif // LEVEL_H

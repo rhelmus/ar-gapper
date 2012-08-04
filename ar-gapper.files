@@ -6,3 +6,4 @@ player.h
 player.cpp
 level.h
 level.cpp
+constants.h

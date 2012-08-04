@@ -10,7 +10,7 @@ bool CPlayer::move()
     if (desiredDirection == DIR_NONE) // Waiting on initial movement
         return false;
 
-    const EPathType path = getPathType(position.x, position.y);
+    const EPathType path = getPxPathType(position.x, position.y);
 
     if (desiredDirection != currentDirection)
     {
@@ -25,6 +25,7 @@ bool CPlayer::move()
     if (currentDirection == DIR_NONE)
         return false;
 
+    const uint8_t oldchx = getChFromPx(position.x), oldchy = getChFromPx(position.y);
 
     if (currentDirection == DIR_LEFT)
     {
@@ -54,6 +55,10 @@ bool CPlayer::move()
             return false;
         ++position.y;
     }
+
+    const uint8_t newchx = getChFromPx(position.x), newchy = getChFromPx(position.y);
+    if ((newchx != oldchx) || (newchy != oldchy))
+        level.markChar(oldchx, oldchy); // Mark char from which we left
 
     return true;
 }

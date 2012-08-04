@@ -3,34 +3,32 @@
 
 #include "level.h"
 
-extern CLevel level;
-
 namespace {
 
 enum
 {
-    LINE_VERT=1,
-    LINE_HORIZ,
-    LINE_VERT_MARKED,
-    LINE_HORIZ_MARKED,
-    CORNER_TOP_LEFT,
-    CORNER_TOP_RIGHT,
-    CORNER_TOP_LEFT_MARKED,
-    CORNER_TOP_RIGHT_MARKED,
-    CORNER_BOTTOM_LEFT,
-    CORNER_BOTTOM_RIGHT,
-    CORNER_BOTTOM_LEFT_MARKED,
-    CORNER_BOTTOM_RIGHT_MARKED,
-    TEE_VERT_LEFT,
-    TEE_VERT_RIGHT,
-    TEE_VERT_LEFT_MARKED,
-    TEE_VERT_RIGHT_MARKED,
-    TEE_HORIZ_TOP,
-    TEE_HORIZ_TOP_MARKED,
-    CROSS,
-    CROSS_MARKED,
-    TEE_HORIZ_BOTTOM,
-    TEE_HORIZ_BOTTOM_MARKED
+    CHAR_LINE_VERT=1,
+    CHAR_LINE_HORIZ,
+    CHAR_LINE_VERT_MARKED,
+    CHAR_LINE_HORIZ_MARKED,
+    CHAR_CORNER_TOP_LEFT,
+    CHAR_CORNER_TOP_RIGHT,
+    CHAR_CORNER_TOP_LEFT_MARKED,
+    CHAR_CORNER_TOP_RIGHT_MARKED,
+    CHAR_CORNER_BOTTOM_LEFT,
+    CHAR_CORNER_BOTTOM_RIGHT,
+    CHAR_CORNER_BOTTOM_LEFT_MARKED,
+    CHAR_CORNER_BOTTOM_RIGHT_MARKED,
+    CHAR_TEE_VERT_LEFT,
+    CHAR_TEE_VERT_RIGHT,
+    CHAR_TEE_VERT_LEFT_MARKED,
+    CHAR_TEE_VERT_RIGHT_MARKED,
+    CHAR_TEE_HORIZ_TOP,
+    CHAR_TEE_HORIZ_TOP_MARKED,
+    CHAR_CROSS,
+    CHAR_CROSS_MARKED,
+    CHAR_TEE_HORIZ_BOTTOM,
+    CHAR_TEE_HORIZ_BOTTOM_MARKED
 };
 
 uint16_t atxy(uint8_t x, uint8_t y)
@@ -42,34 +40,41 @@ uint16_t atxy(uint8_t x, uint8_t y)
 EPathType getCharPathType(uint8_t x, uint8_t y)
 {
     // UNDONE: Check whether tiles are enabled
-    const uint8_t chwidth = 400 / 8, chheight = 300 / 8;
-    const bool hasleft = (x > 0), hasright = ((x + level.getGridSize()) < chwidth);
-    const bool hasup = (y > 0), hasdown = ((y + level.getGridSize()) < chheight);
 
-    if (!hasleft)
+    if (getChTileWOffset(x) > 0)
+        return PATH_HORIZONTAL;
+    else if (getChTileHOffset(y) > 0)
+        return PATH_VERTICAL;
+    else // junction
     {
-        if (!hasup)
-            return PATH_CORNER_TOP_LEFT;
-        else if (!hasdown)
-            return PATH_CORNER_BOTTOM_LEFT;
-        else
-            return PATH_TEE_VERT_LEFT;
+        const bool hasleft = (x > 0), hasright = ((x + level.getGridWidth()) < MAX_GRID_WIDTH);
+        const bool hasup = (y > 0), hasdown = ((y + level.getGridHeight()) < MAX_GRID_HEIGHT);
+
+        if (!hasleft)
+        {
+            if (!hasup)
+                return PATH_CORNER_TOP_LEFT;
+            else if (!hasdown)
+                return PATH_CORNER_BOTTOM_LEFT;
+            else
+                return PATH_TEE_VERT_LEFT;
+        }
+        else if (!hasright)
+        {
+            if (!hasup)
+                return PATH_CORNER_TOP_RIGHT;
+            else if (!hasdown)
+                return PATH_CORNER_BOTTOM_RIGHT;
+            else
+                return PATH_TEE_VERT_RIGHT;
+        }
+        else if (hasup && hasdown)
+            return PATH_CROSS;
+        else if (hasup)
+            return PATH_TEE_HORIZ_BOTTOM;
+        else if (hasdown)
+            return PATH_TEE_HORIZ_TOP;
     }
-    else if (!hasright)
-    {
-        if (!hasup)
-            return PATH_CORNER_TOP_RIGHT;
-        else if (!hasdown)
-            return PATH_CORNER_BOTTOM_RIGHT;
-        else
-            return PATH_TEE_VERT_RIGHT;
-    }
-    else if (hasup && hasdown)
-        return PATH_CROSS;
-    else if (hasup)
-        return PATH_TEE_HORIZ_BOTTOM;
-    else if (hasdown)
-        return PATH_TEE_HORIZ_TOP;
 }
 
 }
@@ -77,53 +82,39 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
 
 void CLevel::draw()
 {
-    // UNDONE: Check tiles
+    // UNDONE: Check whether tiles are enabled
 
-    const uint8_t chwidth = 400 / 8, chheight = 300 / 8;
-
-    for (uint8_t x=0; x<chwidth; x += gridSize)
+    for (uint8_t x=0; x<MAX_GRID_WIDTH; x+=gridWidth)
     {
-        const bool hasleft = (x > 0), hasright = ((x + gridSize) < chwidth);
-
-        for (uint8_t y=0; y<chheight; y += gridSize)
+        for (uint8_t y=0; y<MAX_GRID_HEIGHT; y+=gridHeight)
         {
-            const bool hasup = (y > 0), hasdown = ((y + gridSize) < chheight);
+            const EPathType path = getCharPathType(x, y);
 
-            if (!hasleft)
+            switch (path)
             {
-                if (!hasup)
-                    GD.wr(atxy(x, y), CORNER_TOP_LEFT);
-                else if (!hasdown)
-                    GD.wr(atxy(x, y), CORNER_BOTTOM_LEFT);
-                else
-                    GD.wr(atxy(x, y), TEE_VERT_LEFT);
-            }
-            else if (!hasright)
-            {
-                if (!hasup)
-                    GD.wr(atxy(x, y), CORNER_TOP_RIGHT);
-                else if (!hasdown)
-                    GD.wr(atxy(x, y), CORNER_BOTTOM_RIGHT);
-                else
-                    GD.wr(atxy(x, y), TEE_VERT_RIGHT);
-            }
-            else if (hasup && hasdown)
-                GD.wr(atxy(x, y), CROSS);
-            else if (hasup)
-                GD.wr(atxy(x, y), TEE_HORIZ_BOTTOM);
-            else if (hasdown)
-                GD.wr(atxy(x, y), TEE_HORIZ_TOP);
-
-            if (hasdown)
-            {
-                for (uint16_t sy=y+1; sy<(y + gridSize); ++sy)
-                    GD.wr(atxy(x, sy), LINE_VERT);
+            case PATH_CORNER_BOTTOM_LEFT: GD.wr(atxy(x, y), CHAR_CORNER_BOTTOM_LEFT); break;
+            case PATH_CORNER_BOTTOM_RIGHT: GD.wr(atxy(x, y), CHAR_CORNER_BOTTOM_RIGHT); break;
+            case PATH_CORNER_TOP_LEFT: GD.wr(atxy(x, y), CHAR_CORNER_TOP_LEFT); break;
+            case PATH_CORNER_TOP_RIGHT: GD.wr(atxy(x, y), CHAR_CORNER_TOP_RIGHT); break;
+            case PATH_TEE_HORIZ_BOTTOM: GD.wr(atxy(x, y), CHAR_TEE_HORIZ_BOTTOM); break;
+            case PATH_TEE_HORIZ_TOP: GD.wr(atxy(x, y), CHAR_TEE_HORIZ_TOP); break;
+            case PATH_TEE_VERT_LEFT: GD.wr(atxy(x, y), CHAR_TEE_VERT_LEFT); break;
+            case PATH_TEE_VERT_RIGHT: GD.wr(atxy(x, y), CHAR_TEE_VERT_RIGHT); break;
+            case PATH_CROSS: GD.wr(atxy(x, y), CHAR_CROSS); break;
             }
 
-            if (hasright)
+            // UNDONE
+            if ((y + gridHeight) < MAX_GRID_HEIGHT)
             {
-                for (uint16_t sx=x+1; sx<(x + gridSize); ++sx)
-                    GD.wr(atxy(sx, y), LINE_HORIZ);
+                for (uint16_t sy=y+1; sy<(y + gridHeight); ++sy)
+                    GD.wr(atxy(x, sy), CHAR_LINE_VERT);
+            }
+
+            // UNDONE
+            if ((x + gridWidth) < MAX_GRID_WIDTH)
+            {
+                for (uint16_t sx=x+1; sx<(x + gridWidth); ++sx)
+                    GD.wr(atxy(sx, y), CHAR_LINE_HORIZ);
             }
         }
     }
@@ -131,24 +122,73 @@ void CLevel::draw()
 
 void CLevel::load(uint8_t level)
 {
+    memset(markedColumns, 0, sizeof(markedColumns));
+    memset(markedRows, 0, sizeof(markedRows));
+
     // UNDONE
-    gridSize = 5;
+    gridWidth = 8;
+    gridHeight = 5;
 
     draw();
+}
+
+void CLevel::markChar(uint8_t x, uint8_t y)
+{
+    const EPathType path = getCharPathType(x, y);
+
+    // Note: junctions are both at a column and row
+    const bool atcol = (path != PATH_HORIZONTAL);
+    const bool atrow = (path != PATH_VERTICAL);
+    bool marked = false;
+
+    if (atcol)
+    {
+        const uint8_t col = x / gridWidth;
+        if (!(markedColumns[col] & (1<<y)))
+        {
+            markedColumns[col] |= (1<<y);
+            marked = true;
+        }
+    }
+
+    if (atrow)
+    {
+        const uint8_t row = y / gridHeight;
+        if (!(markedRows[row] & (1<<x)))
+        {
+            markedRows[row] |= (1<<x);
+            marked = true;
+        }
+    }
+
+    if (marked)
+    {
+        switch (path)
+        {
+        case PATH_HORIZONTAL: GD.wr(atxy(x, y), CHAR_LINE_HORIZ_MARKED); break;
+        case PATH_VERTICAL: GD.wr(atxy(x, y), CHAR_LINE_VERT_MARKED); break;
+        case PATH_CORNER_BOTTOM_LEFT: GD.wr(atxy(x, y), CHAR_CORNER_BOTTOM_LEFT_MARKED); break;
+        case PATH_CORNER_BOTTOM_RIGHT: GD.wr(atxy(x, y), CHAR_CORNER_BOTTOM_RIGHT_MARKED); break;
+        case PATH_CORNER_TOP_LEFT: GD.wr(atxy(x, y), CHAR_CORNER_TOP_LEFT_MARKED); break;
+        case PATH_CORNER_TOP_RIGHT: GD.wr(atxy(x, y), CHAR_CORNER_TOP_RIGHT_MARKED); break;
+        case PATH_TEE_HORIZ_BOTTOM: GD.wr(atxy(x, y), CHAR_TEE_HORIZ_BOTTOM_MARKED); break;
+        case PATH_TEE_HORIZ_TOP: GD.wr(atxy(x, y), CHAR_TEE_HORIZ_TOP_MARKED); break;
+        case PATH_TEE_VERT_LEFT: GD.wr(atxy(x, y), CHAR_TEE_VERT_LEFT_MARKED); break;
+        case PATH_TEE_VERT_RIGHT: GD.wr(atxy(x, y), CHAR_TEE_VERT_RIGHT_MARKED); break;
+        case PATH_CROSS: GD.wr(atxy(x, y), CHAR_CROSS_MARKED); break;
+        }
+    }
 }
 
 
 EPathType getPxPathType(uint16_t x, uint16_t y)
 {
-    const uint8_t xchar = x / 8, ychar = y / 8;
-    const uint8_t xgridoffset = xchar % level.getGridSize();
-    const uint8_t ygridoffset = ychar % level.getGridSize();
-    const uint8_t xchoffset = x % 8, ychoffset = y % 8;
-    const uint8_t chwidth = 400 / 8, chheight = 300 / 8; // UNDONE
+    const uint8_t xchar = getChFromPx(x), ychar = getChFromPx(y);
+    const uint8_t xchoffset = x % CHAR_SIZE, ychoffset = y % CHAR_SIZE;
 
-    if (xgridoffset > 0)
+    if (getChTileWOffset(xchar) > 0)
         return PATH_HORIZONTAL;
-    else if (ygridoffset > 0)
+    else if (getChTileHOffset(ychar) > 0)
         return PATH_VERTICAL;
     else // junction
     {
