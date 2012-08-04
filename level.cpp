@@ -77,6 +77,7 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
     }
 }
 
+
 }
 
 
@@ -120,10 +121,59 @@ void CLevel::draw()
     }
 }
 
+void CLevel::markTiles(uint8_t chx, uint8_t chy, EPathType path)
+{
+    // Positions to be checked relative to given character pos
+    bool checkleft = false, checkright = false, checkup = false, checkdown = false;
+    bool checkupleft = false;
+
+    switch (path)
+    {
+    case PATH_HORIZONTAL: checkup = checkdown = true; break;
+    case PATH_VERTICAL: checkleft = checkright = true; break;
+    case PATH_CORNER_BOTTOM_LEFT: checkup = true; break;
+    case PATH_CORNER_BOTTOM_RIGHT: checkleft = true; break;
+    case PATH_CORNER_TOP_LEFT: checkright = true; break;
+    case PATH_CORNER_TOP_RIGHT: checkleft = true; break;
+    case PATH_TEE_HORIZ_BOTTOM: checkleft = checkup = true; break;
+    case PATH_TEE_HORIZ_TOP: checkleft = checkdown = true; break;
+    case PATH_TEE_VERT_LEFT: checkup = checkdown = true; break;
+    case PATH_TEE_VERT_RIGHT: checkupleft = checkleft = true; break;
+    case PATH_CROSS: checkupleft = checkup = checkright = true; break;
+    }
+
+    if (checkleft)
+        checkTile((chx - 1) / gridWidth, chy / gridHeight);
+    if (checkright)
+        checkTile((chx + 1) / gridWidth, chy / gridHeight);
+    if (checkup)
+        checkTile(chx / gridWidth, (chy - 1) / gridHeight);
+    if (checkdown)
+        checkTile(chx / gridWidth, (chy + 1) / gridHeight);
+    if (checkupleft)
+        checkTile((chx - 1) / gridWidth, (chy - 1) / gridHeight);
+}
+
+void CLevel::checkTile(uint8_t tx, uint8_t ty)
+{
+    if (!markedTiles[tx][ty])
+    {
+        markedTiles[tx][ty] = true;
+        const uint8_t chx = tx * gridWidth, chy = ty * gridHeight;
+
+        for (uint8_t x=chx+1; x<(chx + gridWidth); ++x)
+        {
+            for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
+                GD.wr(atxy(x, y), CHAR_TEE_HORIZ_BOTTOM_MARKED+3); // UNDONE
+        }
+    }
+}
+
 void CLevel::load(uint8_t level)
 {
     memset(markedColumns, 0, sizeof(markedColumns));
     memset(markedRows, 0, sizeof(markedRows));
+    memset(markedTiles, 0, sizeof(markedTiles));
 
     // UNDONE
     gridWidth = 8;
@@ -178,6 +228,8 @@ void CLevel::markChar(uint8_t x, uint8_t y)
         case PATH_CROSS: GD.wr(atxy(x, y), CHAR_CROSS_MARKED); break;
         }
     }
+
+    markTiles(x, y, path);
 }
 
 
