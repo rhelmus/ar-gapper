@@ -36,8 +36,8 @@ class CLevel
     uint8_t gridWidth, gridHeight;
     uint64_t markedColumns[MAX_GRID_WIDTH / MIN_GRID_WIDTH + 1];
     uint64_t markedRows[MAX_GRID_HEIGHT / MIN_GRID_HEIGHT + 1];
-    uint8_t markedTiles[MAX_GRID_WIDTH / MIN_GRID_WIDTH + 1]
-                       [MAX_GRID_HEIGHT / MIN_GRID_HEIGHT + 1];
+    uint8_t markedTiles[MAX_GRID_WIDTH / MIN_GRID_WIDTH]
+                       [MAX_GRID_HEIGHT / MIN_GRID_HEIGHT];
 
     void draw(void);
     void markTiles(uint8_t chx, uint8_t chy, EPathType path);

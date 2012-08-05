@@ -2,6 +2,7 @@
 #include <GD.h>
 
 #include "level.h"
+#include "utils.h"
 
 namespace {
 
@@ -107,15 +108,15 @@ void CLevel::draw()
             // UNDONE
             if ((y + gridHeight) < MAX_GRID_HEIGHT)
             {
-                for (uint16_t sy=y+1; sy<(y + gridHeight); ++sy)
+                for (uint8_t sy=y+1; sy<(y + gridHeight); ++sy)
                     GD.wr(atxy(x, sy), CHAR_LINE_VERT);
             }
 
             // UNDONE
             if ((x + gridWidth) < MAX_GRID_WIDTH)
             {
-                for (uint16_t sx=x+1; sx<(x + gridWidth); ++sx)
-                    GD.wr(atxy(sx, y), CHAR_LINE_HORIZ);
+//                for (uint8_t sx=x+1; sx<(x + gridWidth); ++sx)
+                    GD.fill(atxy(x+1, y), CHAR_LINE_HORIZ, gridWidth-2);
             }
         }
     }
@@ -156,16 +157,43 @@ void CLevel::markTiles(uint8_t chx, uint8_t chy, EPathType path)
 
 void CLevel::checkTile(uint8_t tx, uint8_t ty)
 {
+    if ((tx >= (MAX_GRID_WIDTH / gridWidth)) || (ty >= (MAX_GRID_HEIGHT / gridHeight)))
+        return;
+
     if (!markedTiles[tx][ty])
     {
-        markedTiles[tx][ty] = true;
         const uint8_t chx = tx * gridWidth, chy = ty * gridHeight;
+        const uint8_t maxsize = max(gridWidth, gridHeight);
 
-        for (uint8_t x=chx+1; x<(chx + gridWidth); ++x)
+        for (uint8_t i=0; i<maxsize; ++i)
         {
-            for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
-                GD.wr(atxy(x, y), CHAR_TEE_HORIZ_BOTTOM_MARKED+3); // UNDONE
+            if (i < gridWidth)
+            {
+                // Check top
+                if (!check64Bit(markedRows[ty], chx + i))
+                    return;
+
+                // Check bottom
+                if (!check64Bit(markedRows[ty+1], chx + i))
+                    return;
+            }
+
+            if (i < gridHeight)
+            {
+                // Check left
+                if (!check64Bit(markedColumns[tx], chy + i))
+                    return;
+
+                // Check right
+                if (!check64Bit(markedColumns[tx+1], chy + i))
+                    return;
+            }
         }
+
+        markedTiles[tx][ty] = true;
+
+        for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
+            GD.fill(atxy(chx+1, y), CHAR_TEE_HORIZ_BOTTOM_MARKED+3, gridWidth-2); // UNDONE
     }
 }
 
@@ -194,9 +222,9 @@ void CLevel::markChar(uint8_t x, uint8_t y)
     if (atcol)
     {
         const uint8_t col = x / gridWidth;
-        if (!(markedColumns[col] & (1<<y)))
+        if (!check64Bit(markedColumns[col], y))
         {
-            markedColumns[col] |= (1<<y);
+            set64Bit(markedColumns[col], y);
             marked = true;
         }
     }
@@ -204,9 +232,9 @@ void CLevel::markChar(uint8_t x, uint8_t y)
     if (atrow)
     {
         const uint8_t row = y / gridHeight;
-        if (!(markedRows[row] & (1<<x)))
+        if (!check64Bit(markedRows[row], x))
         {
-            markedRows[row] |= (1<<x);
+            set64Bit(markedRows[row], x);
             marked = true;
         }
     }
