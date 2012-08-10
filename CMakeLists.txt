@@ -24,7 +24,7 @@ set(FIRMWARE_NAME gapper)
 
 set(${FIRMWARE_NAME}_BOARD uno)               # Arduino Target board
 # set(${FIRMWARE_NAME}_SKETCHES arduinorp6.ino)
-set(${FIRMWARE_NAME}_SRCS level.cpp player.cpp gapper.cpp)  # Firmware sources
+set(${FIRMWARE_NAME}_SRCS level.cpp player.cpp utils.cpp gapper.cpp)  # Firmware sources
 set(${FIRMWARE_NAME}_PORT /dev/ttyACM0)            # Serial upload port
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libraries)

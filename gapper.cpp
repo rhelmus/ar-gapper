@@ -1,9 +1,11 @@
 #include <SPI.h>
 #include <GD.h>
 
+#include "constants.h"
 #include "gfx.h"
 #include "level.h"
 #include "player.h"
+#include "utils.h"
 
 CLevel level;
 CPlayer player;
@@ -17,16 +19,17 @@ void setup()
     // Default background color is white (for marked tiles)
     GD.wr16(BG_COLOR, RGB(255, 255, 255));
 
+    assetASCII();
+
     // 'Real' background is black (char 0)
-    GD.wr16(RAM_PAL, RGB(0, 0, 0));
-//    GD.wr16(RAM_PAL, 1<<15);
-    
-    GD.copy(RAM_CHR + 16, lines_chr, sizeof(lines_chr));
-    GD.copy(RAM_PAL + 8, lines_pal, sizeof(lines_pal));
+    GD.wr16(RAM_PAL + (CHAR_BACKGROUND * 8), RGB(0, 0, 0));
 
     // Char to mark tiles, make it transparent to see BG_COLOR
-    GD.wr16(RAM_CHR + 16 + sizeof(lines_chr) + 16, 0);
-    GD.wr16(RAM_PAL + 8 + sizeof(lines_pal) + 8, 1<<15);
+    GD.wr16(RAM_CHR + (CHAR_FILL * 16), 0);
+    GD.wr16(RAM_PAL + (CHAR_FILL * 8), 1<<15);
+    
+    GD.copy(RAM_CHR + (CHAR_LINE_VERT * 16), lines_chr, sizeof(lines_chr));
+    GD.copy(RAM_PAL + (CHAR_LINE_VERT * 8), lines_pal, sizeof(lines_pal));
 
     GD.copy(PALETTE4A, players_pal, sizeof(players_pal));
     GD.copy(RAM_SPRIMG, players_img, sizeof(players_img));

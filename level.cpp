@@ -1,36 +1,11 @@
 #include <SPI.h>
 #include <GD.h>
 
+#include "constants.h"
 #include "level.h"
 #include "utils.h"
 
 namespace {
-
-enum
-{
-    CHAR_LINE_VERT=1,
-    CHAR_LINE_HORIZ,
-    CHAR_LINE_VERT_MARKED,
-    CHAR_LINE_HORIZ_MARKED,
-    CHAR_CORNER_TOP_LEFT,
-    CHAR_CORNER_TOP_RIGHT,
-    CHAR_CORNER_TOP_LEFT_MARKED,
-    CHAR_CORNER_TOP_RIGHT_MARKED,
-    CHAR_CORNER_BOTTOM_LEFT,
-    CHAR_CORNER_BOTTOM_RIGHT,
-    CHAR_CORNER_BOTTOM_LEFT_MARKED,
-    CHAR_CORNER_BOTTOM_RIGHT_MARKED,
-    CHAR_TEE_VERT_LEFT,
-    CHAR_TEE_VERT_RIGHT,
-    CHAR_TEE_VERT_LEFT_MARKED,
-    CHAR_TEE_VERT_RIGHT_MARKED,
-    CHAR_TEE_HORIZ_TOP,
-    CHAR_TEE_HORIZ_TOP_MARKED,
-    CHAR_CROSS,
-    CHAR_CROSS_MARKED,
-    CHAR_TEE_HORIZ_BOTTOM,
-    CHAR_TEE_HORIZ_BOTTOM_MARKED
-};
 
 uint16_t atxy(uint8_t x, uint8_t y)
 {
@@ -114,10 +89,7 @@ void CLevel::draw()
 
             // UNDONE
             if ((x + gridWidth) < MAX_GRID_WIDTH)
-            {
-//                for (uint8_t sx=x+1; sx<(x + gridWidth); ++sx)
-                    GD.fill(atxy(x+1, y), CHAR_LINE_HORIZ, gridWidth-2);
-            }
+                GD.fill(atxy(x+1, y), CHAR_LINE_HORIZ, gridWidth-1);
         }
     }
 }
@@ -193,7 +165,10 @@ void CLevel::checkTile(uint8_t tx, uint8_t ty)
         markedTiles[tx][ty] = true;
 
         for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
-            GD.fill(atxy(chx+1, y), CHAR_TEE_HORIZ_BOTTOM_MARKED+3, gridWidth-2); // UNDONE
+            GD.fill(atxy(chx+1, y), CHAR_FILL, gridWidth-1);
+
+        GD.putstr(chx+((gridWidth-1)/2),
+                  chy+(gridHeight/2), "50");
     }
 }
 
@@ -204,8 +179,8 @@ void CLevel::load(uint8_t level)
     memset(markedTiles, 0, sizeof(markedTiles));
 
     // UNDONE
-    gridWidth = 8;
-    gridHeight = 5;
+    gridWidth = 9-1;
+    gridHeight = 7-1;
 
     draw();
 }
