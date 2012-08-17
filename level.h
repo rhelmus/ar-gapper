@@ -7,6 +7,8 @@
 
 enum EPathType
 {
+    PATH_NONE,
+
     PATH_HORIZONTAL,
     PATH_VERTICAL,
 
@@ -33,11 +35,16 @@ enum
 
 class CLevel
 {
+    struct STile
+    {
+        uint8_t marked : 1;
+        uint8_t enabled : 1;
+    };
+
     uint8_t gridWidth, gridHeight;
     uint64_t markedColumns[MAX_GRID_WIDTH / MIN_GRID_WIDTH + 1];
     uint64_t markedRows[MAX_GRID_HEIGHT / MIN_GRID_HEIGHT + 1];
-    uint8_t markedTiles[MAX_GRID_WIDTH / MIN_GRID_WIDTH]
-                       [MAX_GRID_HEIGHT / MIN_GRID_HEIGHT];
+    STile tiles[MAX_GRID_WIDTH / MIN_GRID_WIDTH][MAX_GRID_HEIGHT / MIN_GRID_HEIGHT];
 
     void draw(void);
     void markTiles(uint8_t chx, uint8_t chy, EPathType path);
@@ -51,6 +58,7 @@ public:
 
     uint8_t getGridWidth(void) const { return gridWidth; }
     uint8_t getGridHeight(void) const { return gridHeight; }
+    bool tileEnabled(uint8_t tx, uint8_t ty) const { return tiles[tx][ty].enabled; }
 };
 
 extern CLevel level;
@@ -60,5 +68,7 @@ EPathType getPxPathType(uint16_t x, uint16_t y);
 inline uint8_t getChFromPx(uint16_t px) { return px / CHAR_SIZE; }
 inline uint8_t getChTileWOffset(uint8_t ch) { return ch % level.getGridWidth(); }
 inline uint8_t getChTileHOffset(uint8_t ch) { return ch % level.getGridHeight(); }
+inline uint8_t getTileXFromCh(uint8_t ch) { return ch / level.getGridWidth(); }
+inline uint8_t getTileYFromCh(uint8_t ch) { return ch / level.getGridHeight(); }
 
 #endif // LEVEL_H

@@ -15,16 +15,100 @@ uint16_t atxy(uint8_t x, uint8_t y)
 
 EPathType getCharPathType(uint8_t x, uint8_t y)
 {
-    // UNDONE: Check whether tiles are enabled
+    if ((x >= MAX_GRID_WIDTH) || (y >= MAX_GRID_HEIGHT))
+        return PATH_NONE;
+
+    const uint8_t tx = getTileXFromCh(x), ty = getTileYFromCh(y);
+    const bool tileen = level.tileEnabled(tx, ty);
 
     if (getChTileWOffset(x) > 0)
-        return PATH_HORIZONTAL;
+    {
+        // Bottom
+        if (((y + level.getGridHeight()) >= MAX_GRID_HEIGHT) &&
+            !level.tileEnabled(tx, ty-1))
+            return PATH_NONE;
+        else if (tileen || ((y > 0) && level.tileEnabled(tx, ty-1)))
+            return PATH_HORIZONTAL;
+        else
+            return PATH_NONE;
+    }
     else if (getChTileHOffset(y) > 0)
-        return PATH_VERTICAL;
+    {
+        // Far right
+        if (((x + level.getGridWidth()) >= MAX_GRID_WIDTH) &&
+            !level.tileEnabled(tx-1, ty))
+            return PATH_NONE;
+        else if (tileen || ((x > 0) && level.tileEnabled(tx-1, ty)))
+            return PATH_VERTICAL;
+        else
+            return PATH_NONE;
+    }
     else // junction
     {
-        const bool hasleft = (x > 0), hasright = ((x + level.getGridWidth()) < MAX_GRID_WIDTH);
-        const bool hasup = (y > 0), hasdown = ((y + level.getGridHeight()) < MAX_GRID_HEIGHT);
+        const bool hasleft = (getCharPathType(x-1, y) != PATH_NONE);
+        const bool hasright = (((x + level.getGridWidth()) < MAX_GRID_WIDTH) &&
+                (getCharPathType(x+1, y) != PATH_NONE));
+        const bool hasup = (getCharPathType(x, y-1) != PATH_NONE);
+        const bool hasdown = (((y + level.getGridHeight()) < MAX_GRID_HEIGHT) &&
+                (getCharPathType(x, y+1) != PATH_NONE));
+
+        if (!hasleft)
+        {
+            if ((!hasup && !hasdown) || !hasright)
+                return PATH_NONE;
+            else if (!hasup && hasdown)
+                return PATH_CORNER_TOP_LEFT;
+            else if (!hasdown)
+                return PATH_CORNER_BOTTOM_LEFT;
+            else
+                return PATH_TEE_VERT_LEFT;
+        }
+        else if (!hasright)
+        {
+            if (!hasup)
+                return PATH_CORNER_TOP_RIGHT;
+            else if (!hasdown)
+                return PATH_CORNER_BOTTOM_RIGHT;
+            else
+                return PATH_TEE_VERT_RIGHT;
+        }
+        else if (hasup)
+        {
+            if (hasdown)
+                return PATH_CROSS;
+            else if (hasleft)
+                return PATH_TEE_HORIZ_BOTTOM;
+        }
+        else if (hasdown)
+            return PATH_TEE_HORIZ_TOP;
+    }
+
+#if 0
+    const uint8_t tx = getTileXFromCh(x), ty = getTileYFromCh(y);
+    const bool tileen = level.tileEnabled(tx, ty);
+    const bool hasleft = ((x > 0) && level.tileEnabled(tx-1, ty));
+    const bool hasup = ((y > 0) && level.tileEnabled(tx, ty-1));
+
+    if (getChTileWOffset(x) > 0)
+    {
+        if (tileen || hasup)
+            return PATH_HORIZONTAL;
+        else
+            return PATH_NONE;
+    }
+    else if (getChTileHOffset(y) > 0)
+    {
+        if (tileen || hasleft)
+            return PATH_VERTICAL;
+        else
+            return PATH_NONE;
+    }
+    else // junction
+    {
+        const bool hasright = (((x + level.getGridWidth()) < MAX_GRID_WIDTH) /*&&
+                               level.tileEnabled(tx+1, ty)*/);
+        const bool hasdown = (((y + level.getGridHeight()) < MAX_GRID_HEIGHT) /*&&
+                              level.tileEnabled(tx, ty+1)*/);
 
         if (!hasleft)
         {
@@ -51,6 +135,8 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
         else if (hasdown)
             return PATH_TEE_HORIZ_TOP;
     }
+#endif
+    return PATH_NONE;
 }
 
 
@@ -59,13 +145,14 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
 
 void CLevel::draw()
 {
-    // UNDONE: Check whether tiles are enabled
-
     for (uint8_t x=0; x<MAX_GRID_WIDTH; x+=gridWidth)
     {
         for (uint8_t y=0; y<MAX_GRID_HEIGHT; y+=gridHeight)
         {
             const EPathType path = getCharPathType(x, y);
+
+            if (path == PATH_NONE)
+                continue;
 
             switch (path)
             {
@@ -81,14 +168,16 @@ void CLevel::draw()
             }
 
             // UNDONE
-            if ((y + gridHeight) < MAX_GRID_HEIGHT)
+            if (((y + gridHeight) < MAX_GRID_HEIGHT) &&
+                (getCharPathType(x, y+1) == PATH_VERTICAL))
             {
                 for (uint8_t sy=y+1; sy<(y + gridHeight); ++sy)
                     GD.wr(atxy(x, sy), CHAR_LINE_VERT);
             }
 
             // UNDONE
-            if ((x + gridWidth) < MAX_GRID_WIDTH)
+            if (((x + gridWidth) < MAX_GRID_WIDTH) &&
+                (getCharPathType(x+1, y) == PATH_HORIZONTAL))
                 GD.fill(atxy(x+1, y), CHAR_LINE_HORIZ, gridWidth-1);
         }
     }
@@ -97,34 +186,33 @@ void CLevel::draw()
 void CLevel::markTiles(uint8_t chx, uint8_t chy, EPathType path)
 {
     // Positions to be checked relative to given character pos
-    bool checkleft = false, checkright = false, checkup = false, checkdown = false;
-    bool checkupleft = false;
+    bool checkleft = false, checkup = false, checkupleft = false, checkcurrent = false;
 
     switch (path)
     {
-    case PATH_HORIZONTAL: checkup = checkdown = true; break;
-    case PATH_VERTICAL: checkleft = checkright = true; break;
+    case PATH_HORIZONTAL: checkup = checkcurrent = true; break;
+    case PATH_VERTICAL: checkleft = checkcurrent = true; break;
     case PATH_CORNER_BOTTOM_LEFT: checkup = true; break;
     case PATH_CORNER_BOTTOM_RIGHT: checkleft = true; break;
-    case PATH_CORNER_TOP_LEFT: checkright = true; break;
+    case PATH_CORNER_TOP_LEFT: checkcurrent = true; break;
     case PATH_CORNER_TOP_RIGHT: checkleft = true; break;
-    case PATH_TEE_HORIZ_BOTTOM: checkleft = checkup = true; break;
-    case PATH_TEE_HORIZ_TOP: checkleft = checkdown = true; break;
-    case PATH_TEE_VERT_LEFT: checkup = checkdown = true; break;
+    case PATH_TEE_HORIZ_BOTTOM: checkupleft = checkup = true; break;
+    case PATH_TEE_HORIZ_TOP: checkleft = checkcurrent = true; break;
+    case PATH_TEE_VERT_LEFT: checkup = checkcurrent = true; break;
     case PATH_TEE_VERT_RIGHT: checkupleft = checkleft = true; break;
-    case PATH_CROSS: checkupleft = checkup = checkright = true; break;
+    case PATH_CROSS: checkleft = checkupleft = checkup = checkcurrent = true; break;
     }
 
+    const uint8_t tx = getTileXFromCh(chx), ty = getTileYFromCh(chy);
+
+    if (checkcurrent)
+        checkTile(tx, ty);
     if (checkleft)
-        checkTile((chx - 1) / gridWidth, chy / gridHeight);
-    if (checkright)
-        checkTile((chx + 1) / gridWidth, chy / gridHeight);
+        checkTile(tx - 1, ty);
     if (checkup)
-        checkTile(chx / gridWidth, (chy - 1) / gridHeight);
-    if (checkdown)
-        checkTile(chx / gridWidth, (chy + 1) / gridHeight);
+        checkTile(tx, ty - 1);
     if (checkupleft)
-        checkTile((chx - 1) / gridWidth, (chy - 1) / gridHeight);
+        checkTile(tx - 1, ty - 1);
 }
 
 void CLevel::checkTile(uint8_t tx, uint8_t ty)
@@ -132,7 +220,7 @@ void CLevel::checkTile(uint8_t tx, uint8_t ty)
     if ((tx >= (MAX_GRID_WIDTH / gridWidth)) || (ty >= (MAX_GRID_HEIGHT / gridHeight)))
         return;
 
-    if (!markedTiles[tx][ty])
+    if (!tiles[tx][ty].marked)
     {
         const uint8_t chx = tx * gridWidth, chy = ty * gridHeight;
         const uint8_t maxsize = max(gridWidth, gridHeight);
@@ -162,7 +250,7 @@ void CLevel::checkTile(uint8_t tx, uint8_t ty)
             }
         }
 
-        markedTiles[tx][ty] = true;
+        tiles[tx][ty].marked = true;
 
         for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
             GD.fill(atxy(chx+1, y), CHAR_FILL, gridWidth-1);
@@ -176,11 +264,18 @@ void CLevel::load(uint8_t level)
 {
     memset(markedColumns, 0, sizeof(markedColumns));
     memset(markedRows, 0, sizeof(markedRows));
-    memset(markedTiles, 0, sizeof(markedTiles));
+    memset(tiles, 0, sizeof(tiles));
 
     // UNDONE
     gridWidth = 9-1;
     gridHeight = 7-1;
+    for (uint8_t x=0; x<MAX_GRID_WIDTH / MIN_GRID_WIDTH; ++x)
+    {
+        for (uint8_t y=0; y<MAX_GRID_HEIGHT / MIN_GRID_HEIGHT; ++y)
+            tiles[x][y].enabled = true;
+    }
+    tiles[2][0].enabled = false;
+    tiles[3][0].enabled = false;
 
     draw();
 }
@@ -241,94 +336,92 @@ EPathType getPxPathType(uint16_t x, uint16_t y)
     const uint8_t xchar = getChFromPx(x), ychar = getChFromPx(y);
     const uint8_t xchoffset = x % CHAR_SIZE, ychoffset = y % CHAR_SIZE;
 
-    if (getChTileWOffset(xchar) > 0)
-        return PATH_HORIZONTAL;
-    else if (getChTileHOffset(ychar) > 0)
-        return PATH_VERTICAL;
-    else // junction
-    {
-        EPathType chtype = getCharPathType(xchar, ychar);
+    const EPathType chtype = getCharPathType(xchar, ychar);
 
-        if (chtype == PATH_CORNER_BOTTOM_LEFT)
-        {
-            if (xchoffset > 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset < 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_CORNER_BOTTOM_LEFT;
-        }
-        else if (chtype == PATH_CORNER_BOTTOM_RIGHT)
-        {
-            if (xchoffset < 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset < 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_CORNER_BOTTOM_RIGHT;
-        }
-        else if (chtype == PATH_CORNER_TOP_LEFT)
-        {
-            if (xchoffset > 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset > 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_CORNER_TOP_LEFT;
-        }
-        else if (chtype == PATH_CORNER_TOP_RIGHT)
-        {
-            if (xchoffset < 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset > 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_CORNER_TOP_RIGHT;
-        }
-        else if (chtype == PATH_TEE_HORIZ_BOTTOM)
-        {
-            if (xchoffset != 4)
-                return PATH_HORIZONTAL;
-            else if (ychoffset < 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_TEE_HORIZ_BOTTOM;
-        }
-        else if (chtype == PATH_TEE_HORIZ_TOP)
-        {
-            if (xchoffset != 4)
-                return PATH_HORIZONTAL;
-            else if (ychoffset > 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_TEE_HORIZ_TOP;
-        }
-        else if (chtype == PATH_TEE_VERT_LEFT)
-        {
-            if (xchoffset > 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset != 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_TEE_VERT_LEFT;
-        }
-        else if (chtype == PATH_TEE_VERT_RIGHT)
-        {
-            if (xchoffset < 5)
-                return PATH_HORIZONTAL;
-            else if (ychoffset != 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_TEE_VERT_RIGHT;
-        }
-        else if (chtype == PATH_CROSS)
-        {
-            if (xchoffset != 4)
-                return PATH_HORIZONTAL;
-            else if (ychoffset != 4)
-                return PATH_VERTICAL;
-            else
-                return PATH_CROSS;
-        }
+    if ((chtype == PATH_NONE) || (chtype == PATH_HORIZONTAL || (chtype == PATH_VERTICAL)))
+        return chtype;
+
+    if (chtype == PATH_CORNER_BOTTOM_LEFT)
+    {
+        if (xchoffset > 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset < 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_CORNER_BOTTOM_LEFT;
     }
+    else if (chtype == PATH_CORNER_BOTTOM_RIGHT)
+    {
+        if (xchoffset < 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset < 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_CORNER_BOTTOM_RIGHT;
+    }
+    else if (chtype == PATH_CORNER_TOP_LEFT)
+    {
+        if (xchoffset > 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset > 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_CORNER_TOP_LEFT;
+    }
+    else if (chtype == PATH_CORNER_TOP_RIGHT)
+    {
+        if (xchoffset < 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset > 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_CORNER_TOP_RIGHT;
+    }
+    else if (chtype == PATH_TEE_HORIZ_BOTTOM)
+    {
+        if (xchoffset != 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset < 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_TEE_HORIZ_BOTTOM;
+    }
+    else if (chtype == PATH_TEE_HORIZ_TOP)
+    {
+        if (xchoffset != 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset > 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_TEE_HORIZ_TOP;
+    }
+    else if (chtype == PATH_TEE_VERT_LEFT)
+    {
+        if (xchoffset > 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset != 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_TEE_VERT_LEFT;
+    }
+    else if (chtype == PATH_TEE_VERT_RIGHT)
+    {
+        if (xchoffset < 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset != 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_TEE_VERT_RIGHT;
+    }
+    else if (chtype == PATH_CROSS)
+    {
+        if (xchoffset != 4)
+            return PATH_HORIZONTAL;
+        else if (ychoffset != 4)
+            return PATH_VERTICAL;
+        else
+            return PATH_CROSS;
+    }
+
+    return PATH_NONE;
 }

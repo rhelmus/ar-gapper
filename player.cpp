@@ -11,6 +11,7 @@ bool CPlayer::move()
         return false;
 
     const EPathType path = getPxPathType(position.x, position.y);
+    Serial.print("pxpath: "); Serial.println(path, DEC);
 
     if (desiredDirection != currentDirection)
     {
