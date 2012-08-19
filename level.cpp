@@ -15,7 +15,7 @@ uint16_t atxy(uint8_t x, uint8_t y)
 
 EPathType getCharPathType(uint8_t x, uint8_t y)
 {
-    if ((x >= MAX_GRID_WIDTH) || (y >= MAX_GRID_HEIGHT))
+    if ((x >= MAX_GRID_WIDTH) || (y >= MAX_GRID_HEIGHT) || (y < GRID_OFFSET_Y))
         return PATH_NONE;
 
     const uint8_t tx = getTileXFromCh(x), ty = getTileYFromCh(y);
@@ -27,7 +27,7 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
         if (((y + level.getGridHeight()) >= MAX_GRID_HEIGHT) &&
             !level.tileEnabled(tx, ty-1))
             return PATH_NONE;
-        else if (tileen || ((y > 0) && level.tileEnabled(tx, ty-1)))
+        else if (tileen || ((y > GRID_OFFSET_Y) && level.tileEnabled(tx, ty-1)))
             return PATH_HORIZONTAL;
         else
             return PATH_NONE;
@@ -83,59 +83,6 @@ EPathType getCharPathType(uint8_t x, uint8_t y)
             return PATH_TEE_HORIZ_TOP;
     }
 
-#if 0
-    const uint8_t tx = getTileXFromCh(x), ty = getTileYFromCh(y);
-    const bool tileen = level.tileEnabled(tx, ty);
-    const bool hasleft = ((x > 0) && level.tileEnabled(tx-1, ty));
-    const bool hasup = ((y > 0) && level.tileEnabled(tx, ty-1));
-
-    if (getChTileWOffset(x) > 0)
-    {
-        if (tileen || hasup)
-            return PATH_HORIZONTAL;
-        else
-            return PATH_NONE;
-    }
-    else if (getChTileHOffset(y) > 0)
-    {
-        if (tileen || hasleft)
-            return PATH_VERTICAL;
-        else
-            return PATH_NONE;
-    }
-    else // junction
-    {
-        const bool hasright = (((x + level.getGridWidth()) < MAX_GRID_WIDTH) /*&&
-                               level.tileEnabled(tx+1, ty)*/);
-        const bool hasdown = (((y + level.getGridHeight()) < MAX_GRID_HEIGHT) /*&&
-                              level.tileEnabled(tx, ty+1)*/);
-
-        if (!hasleft)
-        {
-            if (!hasup)
-                return PATH_CORNER_TOP_LEFT;
-            else if (!hasdown)
-                return PATH_CORNER_BOTTOM_LEFT;
-            else
-                return PATH_TEE_VERT_LEFT;
-        }
-        else if (!hasright)
-        {
-            if (!hasup)
-                return PATH_CORNER_TOP_RIGHT;
-            else if (!hasdown)
-                return PATH_CORNER_BOTTOM_RIGHT;
-            else
-                return PATH_TEE_VERT_RIGHT;
-        }
-        else if (hasup && hasdown)
-            return PATH_CROSS;
-        else if (hasup)
-            return PATH_TEE_HORIZ_BOTTOM;
-        else if (hasdown)
-            return PATH_TEE_HORIZ_TOP;
-    }
-#endif
     return PATH_NONE;
 }
 
@@ -147,7 +94,7 @@ void CLevel::draw()
 {
     for (uint8_t x=0; x<MAX_GRID_WIDTH; x+=gridWidth)
     {
-        for (uint8_t y=0; y<MAX_GRID_HEIGHT; y+=gridHeight)
+        for (uint8_t y=GRID_OFFSET_Y; y<MAX_GRID_HEIGHT; y+=gridHeight)
         {
             const EPathType path = getCharPathType(x, y);
 
@@ -167,7 +114,6 @@ void CLevel::draw()
             case PATH_CROSS: GD.wr(atxy(x, y), CHAR_CROSS); break;
             }
 
-            // UNDONE
             if (((y + gridHeight) < MAX_GRID_HEIGHT) &&
                 (getCharPathType(x, y+1) == PATH_VERTICAL))
             {
@@ -175,7 +121,6 @@ void CLevel::draw()
                     GD.wr(atxy(x, sy), CHAR_LINE_VERT);
             }
 
-            // UNDONE
             if (((x + gridWidth) < MAX_GRID_WIDTH) &&
                 (getCharPathType(x+1, y) == PATH_HORIZONTAL))
                 GD.fill(atxy(x+1, y), CHAR_LINE_HORIZ, gridWidth-1);
@@ -222,7 +167,7 @@ void CLevel::checkTile(uint8_t tx, uint8_t ty)
 
     if (!tiles[tx][ty].marked)
     {
-        const uint8_t chx = tx * gridWidth, chy = ty * gridHeight;
+        const uint8_t chx = getChXFromTile(tx), chy = getChYFromTile(ty);
         const uint8_t maxsize = max(gridWidth, gridHeight);
 
         for (uint8_t i=0; i<maxsize; ++i)

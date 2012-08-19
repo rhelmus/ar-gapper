@@ -27,10 +27,11 @@ enum EPathType
 
 enum
 {
+    GRID_OFFSET_Y = 1,
     MIN_GRID_WIDTH = 4-1,
     MIN_GRID_HEIGHT = 3-1,
     MAX_GRID_WIDTH = SCREEN_WIDTH / CHAR_SIZE,
-    MAX_GRID_HEIGHT = SCREEN_HEIGHT / CHAR_SIZE
+    MAX_GRID_HEIGHT = (SCREEN_HEIGHT / CHAR_SIZE) - GRID_OFFSET_Y - 1
 };
 
 class CLevel
@@ -67,8 +68,11 @@ extern CLevel level;
 EPathType getPxPathType(uint16_t x, uint16_t y);
 inline uint8_t getChFromPx(uint16_t px) { return px / CHAR_SIZE; }
 inline uint8_t getChTileWOffset(uint8_t ch) { return ch % level.getGridWidth(); }
-inline uint8_t getChTileHOffset(uint8_t ch) { return ch % level.getGridHeight(); }
+inline uint8_t getChTileHOffset(uint8_t ch) { return (ch - GRID_OFFSET_Y) % level.getGridHeight(); }
 inline uint8_t getTileXFromCh(uint8_t ch) { return ch / level.getGridWidth(); }
-inline uint8_t getTileYFromCh(uint8_t ch) { return ch / level.getGridHeight(); }
+inline uint8_t getTileYFromCh(uint8_t ch) { return (ch - GRID_OFFSET_Y) / level.getGridHeight(); }
+inline uint8_t getChXFromTile(uint8_t tx) { return tx * level.getGridWidth(); }
+inline uint8_t getChYFromTile(uint8_t ty) { return ty * level.getGridHeight() + GRID_OFFSET_Y; }
+
 
 #endif // LEVEL_H

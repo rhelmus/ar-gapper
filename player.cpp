@@ -11,7 +11,6 @@ bool CPlayer::move()
         return false;
 
     const EPathType path = getPxPathType(position.x, position.y);
-    Serial.print("pxpath: "); Serial.println(path, DEC);
 
     if (desiredDirection != currentDirection)
     {
@@ -80,6 +79,8 @@ void CPlayer::frame()
 void CPlayer::reset()
 {
     currentDirection = desiredDirection = DIR_NONE;
-    position.x = position.y = 4;
+    // UNDONE
+    position.x = 4;
+    position.y = 12;
     draw();
 }
