@@ -12,6 +12,7 @@ enum
 {
     CHAR_BACKGROUND=0,
     CHAR_FILL,
+    CHAR_TOPBAR,
 
     CHAR_LINE_VERT=128, // Start after fonts
     CHAR_LINE_HORIZ,

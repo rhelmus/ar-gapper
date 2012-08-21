@@ -2,6 +2,10 @@
 #include <SPI.h>
 #include <GD.h>
 
+#ifndef __AVR__
+#include "font8x8.h"
+#endif
+
 namespace {
 
 uint8_t stretch[16] =
@@ -17,12 +21,20 @@ uint8_t stretch[16] =
 // Font loading from assets, see http://excamera.com/sphinx/gameduino/samples/assetlibrary/index.html
 void assetASCII()
 {
+#ifdef __AVR__
     Asset a;
     a.open("fonts", "font8x8", NULL);
+#endif
+
     for (uint16_t i=0; i<768; ++i)
     {
         uint8_t b;
+
+#ifndef __AVR__
+        b = pgm_read_byte(font8x8 + i);
+#else
         a.read(&b, 1);
+#endif
         uint8_t h = stretch[b >> 4];
         uint8_t l = stretch[b & 0xf];
         GD.wr(0x1000 + (16 * ' ') + (2 * i), h);

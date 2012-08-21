@@ -1,3 +1,29 @@
+option(EMU "emu build" ON)
+
+if (EMU)
+
+project(gdgapper C CXX)
+
+link_directories(
+  )
+
+include_directories(
+  ${CMAKE_SOURCE_DIR}/../gdemu/gdemu
+  )
+
+ADD_SUBDIRECTORY(../gdemu/gdemu "${CMAKE_CURRENT_BINARY_DIR}/gdemu")
+
+FILE(GLOB SRCS *.cpp)
+FILE(GLOB HDRS *.h)
+
+ADD_EXECUTABLE(gdgapper ${SRCS} ${HDRS})
+
+target_link_libraries(gdgapper
+        libgdemu
+        )
+
+else()
+
 #=============================================================================#
 # Author: QueezyTheGreat                                                      #
 # Date:   26.04.2011                                                          #
@@ -33,3 +59,5 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libraries)
 #  Target generation                                                 #
 #====================================================================#
 generate_arduino_firmware(${FIRMWARE_NAME})
+
+endif (EMU)
