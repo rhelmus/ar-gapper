@@ -11,44 +11,64 @@
 CLevel level;
 CPlayer player;
 
-void setup()
+enum
 {
-    Serial.begin(115200);
-    
-    GD.begin();
+    TOP_BAR_COLOR = RGB(251, 84, 255),
+    TOP_TEXT_COLOR = TOP_BAR_COLOR,
+    TOP_BAR_BG_COLOR = RGB(78, 253, 253)
 
-    // Default background color is white (for marked tiles)
-    GD.wr16(BG_COLOR, RGB(255, 255, 255));
+    // UNDONE
+};
 
-    assetASCII();
-
-    // 'Real' background is black (char 0)
+void setupGraphics()
+{
+    // Effective middle background is black (char 0)
     GD.wr16(RAM_PAL + (CHAR_BACKGROUND * 8), RGB(0, 0, 0));
 
     // Char to mark tiles, make it transparent to see BG_COLOR
-    GD.wr16(RAM_CHR + (CHAR_FILL * 16), 0);
     GD.wr16(RAM_PAL + (CHAR_FILL * 8), TRANSPARENT);
+
+    GD.wr16(RAM_PAL + (CHAR_TOPBAR * 8), TOP_BAR_COLOR);
 
     GD.copy(RAM_CHR + (CHAR_LINE_VERT * 16), lines_chr, sizeof(lines_chr));
     GD.copy(RAM_PAL + (CHAR_LINE_VERT * 8), lines_pal, sizeof(lines_pal));
 
     GD.copy(PALETTE4A, players_pal, sizeof(players_pal));
     GD.copy(RAM_SPRIMG, players_img, sizeof(players_img));
-    
-    GD.wr16(COMM+0, RGB(78, 253, 253)); // background top
-    GD.wr16(COMM+2, RGB(251, 84, 255)); // text top
+}
+
+void setupScreenColors()
+{
+    GD.wr16(COMM+0, TOP_BAR_BG_COLOR); // background top
+    GD.wr16(COMM+2, TOP_TEXT_COLOR); // text top
     GD.wr16(COMM+4, RGB(255, 255, 255)); // background middle
     GD.wr16(COMM+6, RGB(0, 0, 0)); // text middle
     GD.wr16(COMM+8, RGB(0, 0, 0)); // background bottom
     GD.wr16(COMM+10, RGB(255, 255, 255)); // text bottom
     GD.microcode(bg_code, sizeof(bg_code));
+}
 
+void setupBars()
+{
     // Top & bottom bars
-//    GD.fill(atxy(0, 0), CHAR_FILL, SCREEN_WIDTH_CHAR);
+    GD.fill(atxy(0, 0), CHAR_TOPBAR, SCREEN_WIDTH_CHAR);
     GD.fill(atxy(0, SCREEN_HEIGHT_CHAR-1), CHAR_FILL, SCREEN_WIDTH_CHAR);
     GD.putstr(10, 0, "Heuh");
     GD.putstr(20, SCREEN_HEIGHT_CHAR-1, "Heuh");
+}
 
+void setup()
+{
+    Serial.begin(115200);
+    
+    GD.begin();
+
+    assetASCII();
+
+    setupGraphics();
+    setupScreenColors();
+    setupBars();
+    
     GD.__wstartspr(0);
 //    draw_players(4, 4, 0, 0);
     draw_players(400-8, 300-8, 1, 0);
