@@ -1,4 +1,4 @@
-option(EMU "emu build" ON)
+option(EMU "emu build" OFF)
 
 if (EMU)
 

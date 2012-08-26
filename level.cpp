@@ -7,12 +7,6 @@
 
 namespace {
 
-uint16_t atxy(uint8_t x, uint8_t y)
-{
-    // Copied from frogger tutorial
-    return RAM_PIC + 64 * y + x;
-}
-
 EPathType getCharPathType(uint8_t x, uint8_t y)
 {
     if ((x >= MAX_GRID_WIDTH) || (y >= MAX_GRID_HEIGHT) || (y < GRID_OFFSET_Y))
