@@ -10,10 +10,10 @@ extern const char bottomBarText[] PROGMEM;
 
 void CGame::updateScore()
 {
-    char txt[6];
+    char txt[7];
     itoa(score, txt, 10);
-    txt[5] = 0;
-    GD.putstr(12+(5-strlen(txt)), SCREEN_HEIGHT_CHAR-1, txt);
+    txt[6] = 0;
+    GD.putstr(12+(6-strlen(txt)), SCREEN_HEIGHT_CHAR-1, txt);
 }
 
 void CGame::updateLives()
@@ -21,7 +21,7 @@ void CGame::updateLives()
     char txt[2];
     itoa(lives, txt, 10);
     txt[1] = 0;
-    GD.putstr(27, SCREEN_HEIGHT_CHAR-1, txt);
+    GD.putstr(28, SCREEN_HEIGHT_CHAR-1, txt);
 }
 
 void CGame::updateLevel()
@@ -29,7 +29,7 @@ void CGame::updateLevel()
     char txt[3];
     itoa(level, txt, 10);
     txt[2] = 0;
-    GD.putstr(38+(2-strlen(txt)), SCREEN_HEIGHT_CHAR-1, txt);
+    GD.putstr(39+(2-strlen(txt)), SCREEN_HEIGHT_CHAR-1, txt);
 }
 
 void CGame::reset()

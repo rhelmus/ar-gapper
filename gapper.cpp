@@ -3,17 +3,19 @@
 
 #include "j1firmware/bg.h"
 #include "constants.h"
+#include "enemy.h"
 #include "game.h"
 #include "gfx.h"
 #include "level.h"
 #include "player.h"
 #include "utils.h"
 
+CEnemy enemy;
 CGame game;
 CLevel level;
 CPlayer player;
 
-const char bottomBarText[] PROGMEM = "      Score[     ]   Lives[ ]   Level[  ]";
+const char bottomBarText[] PROGMEM = "      Score[      ]   Lives[ ]   Level[  ]";
 
 enum
 {
@@ -89,6 +91,7 @@ void setup()
     
 
     level.load(1);
+    enemy.reset();
     player.reset();
     game.reset();
 }
@@ -117,6 +120,7 @@ void loop()
             }
         }
 
+        enemy.frame();
         player.frame();
     }
 }

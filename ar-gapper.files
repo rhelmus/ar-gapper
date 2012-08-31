@@ -12,3 +12,5 @@ utils.cpp
 j1firmware/bg.fs
 game.h
 game.cpp
+enemy.h
+enemy.cpp

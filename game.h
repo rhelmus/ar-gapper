@@ -5,7 +5,7 @@
 
 class CGame
 {
-    uint16_t score;
+    uint32_t score;
     uint8_t lives, level;
 
     void updateScore(void);
@@ -18,7 +18,7 @@ public:
     void reset(void);
     void frame(void);
 
-    void addScore(uint16_t s) { score += s; updateScore(); }
+    void addScore(uint32_t s) { score += s; updateScore(); }
     void takeLive(void) { --lives; updateLives(); }
     void setLevel(uint8_t l) { level = l; updateLevel(); }
 };
