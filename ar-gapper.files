@@ -10,3 +10,5 @@ constants.h
 utils.h
 utils.cpp
 j1firmware/bg.fs
+game.h
+game.cpp

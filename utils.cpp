@@ -55,3 +55,14 @@ uint16_t atxy(uint8_t x, uint8_t y)
     // Copied from frogger tutorial
     return RAM_PIC + 64 * y + x;
 }
+
+// Based on GD.putstr
+void putstr_P(int x, int y, const char *s)
+{
+    char c;
+
+    GD.__wstart((y << 6) + x);
+    while ((c = pgm_read_byte(s++)))
+        SPI.transfer(c);
+    GD.__end();
+}

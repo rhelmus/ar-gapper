@@ -9,7 +9,6 @@ public:
     enum EDirection { DIR_NONE, DIR_LEFT, DIR_RIGHT, DIR_UP, DIR_DOWN };
 
 private:
-
     struct { uint16_t x, y; } position;
     EDirection currentDirection, desiredDirection;
 

@@ -13,7 +13,7 @@ enum
 enum
 {
     CHAR_BACKGROUND=0,
-    CHAR_FILL,
+    CHAR_TRANSPARENT,
     CHAR_TOPBAR,
 
     CHAR_LINE_VERT=128, // Start after fonts

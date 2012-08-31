@@ -2,6 +2,7 @@
 #include <GD.h>
 
 #include "constants.h"
+#include "game.h"
 #include "level.h"
 #include "utils.h"
 
@@ -192,10 +193,12 @@ void CLevel::checkTile(uint8_t tx, uint8_t ty)
         tiles[tx][ty].marked = true;
 
         for (uint8_t y=chy+1; y<(chy + gridHeight); ++y)
-            GD.fill(atxy(chx+1, y), CHAR_FILL, gridWidth-1);
+            GD.fill(atxy(chx+1, y), CHAR_TRANSPARENT, gridWidth-1);
 
         GD.putstr(chx+((gridWidth-1)/2),
                   chy+(gridHeight/2), "50");
+
+        game.addScore(50);
     }
 }
 
