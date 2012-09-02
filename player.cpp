@@ -65,8 +65,8 @@ bool CPlayer::move()
 
 void CPlayer::draw()
 {
-    GD.__wstartspr(0);
-    draw_players(position.x, position.y, 0, 0);
+    GD.__wstartspr(sprite);
+    draw_players(position.x, position.y, sprite, 0);
     GD.__end();
 }
 
@@ -76,11 +76,10 @@ void CPlayer::frame()
         draw();
 }
 
-void CPlayer::reset()
+void CPlayer::reset(uint16_t x, uint16_t y)
 {
     currentDirection = desiredDirection = DIR_NONE;
-    // UNDONE
-    position.x = 4;
-    position.y = 12;
+    position.x = x;
+    position.y = y;
     draw();
 }

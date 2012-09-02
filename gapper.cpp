@@ -10,10 +10,10 @@
 #include "player.h"
 #include "utils.h"
 
-CEnemy enemy;
 CGame game;
 CLevel level;
-CPlayer player;
+CPlayer player(SPRITE_PLAYER);
+CEnemy enemy(SPRITE_ENEMY);
 
 const char bottomBarText[] PROGMEM = "      Score[      ]   Lives[ ]   Level[  ]";
 
@@ -83,16 +83,10 @@ void setup()
     setupGraphics();
     setupScreenColors();
     setupBars();
-    
-    GD.__wstartspr(0);
-//    draw_players(4, 4, 0, 0);
-    draw_players(400-8, 300-8, 1, 0);
-    GD.__end();
-    
-
+       
     level.load(1);
-    enemy.reset();
-    player.reset();
+    enemy.reset((48*8)+4, (30*8)+12); // UNDONE
+    player.reset(4, 12); // UNDONE
     game.reset();
 }
 

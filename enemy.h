@@ -1,18 +1,14 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-class CEnemy
+#include "player.h"
+
+class CEnemy: public CPlayer
 {
-    struct { uint16_t x, y; } position;
-
-    bool move(void);
-    void draw(void);
-
 public:
-    CEnemy(void) { }
+    CEnemy(uint8_t s) : CPlayer(s) { }
 
-    void frame(void);
-    void reset(void);
+    virtual void frame(void);
 };
 
 #endif // ENEMY_H

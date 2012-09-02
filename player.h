@@ -8,7 +8,8 @@ class CPlayer
 public:
     enum EDirection { DIR_NONE, DIR_LEFT, DIR_RIGHT, DIR_UP, DIR_DOWN };
 
-private:
+/*private*/protected:
+    uint8_t sprite;
     struct { uint16_t x, y; } position;
     EDirection currentDirection, desiredDirection;
 
@@ -16,10 +17,10 @@ private:
     void draw(void);
 
 public:
-    CPlayer(void) { }
+    CPlayer(uint8_t s) : sprite(s) { }
 
-    void frame(void);
-    void reset(void);
+    virtual void frame(void);
+    void reset(uint16_t x, uint16_t y);
 
     uint16_t getX(void) const { return position.x; }
     uint16_t getY(void) const { return position.y; }

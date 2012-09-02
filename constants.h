@@ -40,4 +40,10 @@ enum
     CHAR_TEE_HORIZ_BOTTOM_MARKED
 };
 
+enum
+{
+    SPRITE_PLAYER=0,
+    SPRITE_ENEMY=1
+};
+
 #endif // CONSTANTS_H
